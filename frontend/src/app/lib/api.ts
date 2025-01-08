@@ -27,7 +27,7 @@ const handleResponse = async (response: Response) => {
     }
     return data;
   } catch (e) {
-    throw new Error('Invalid response from server');
+    throw new Error(`${e}`);
   }
 };
 

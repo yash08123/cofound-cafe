@@ -10,12 +10,11 @@ export default function IdeaForm() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    skills: [] as string[],
+    skills: [''],
     compensation: 'equity',
     amount: '',
     industry: '',
   });
-  const [skillInput, setSkillInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,22 +31,19 @@ export default function IdeaForm() {
     }
   };
 
-  const handleSkillAdd = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && skillInput.trim()) {
-      e.preventDefault();
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, skillInput.trim()]
-      }));
-      setSkillInput('');
-    }
+  const handleSkillChange = (index: number, value: string) => {
+    const newSkills = [...formData.skills];
+    newSkills[index] = value;
+    setFormData({ ...formData, skills: newSkills });
   };
 
-  const removeSkill = (skillToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
-    }));
+  const addSkill = () => {
+    setFormData({ ...formData, skills: [...formData.skills, ''] });
+  };
+
+  const removeSkill = (index: number) => {
+    const newSkills = formData.skills.filter((_, i) => i !== index);
+    setFormData({ ...formData, skills: newSkills });
   };
 
   return (
@@ -66,7 +62,7 @@ export default function IdeaForm() {
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.title}
-          onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
 
@@ -80,8 +76,40 @@ export default function IdeaForm() {
           rows={4}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.description}
-          onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Skills Required</label>
+        {formData.skills.map((skill, index) => (
+          <div key={index} className="mt-2 flex items-center gap-2">
+            <input
+              type="text"
+              required
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              value={skill}
+              onChange={(e) => handleSkillChange(index, e.target.value)}
+              placeholder="e.g., React, Node.js, UI/UX"
+            />
+            {index > 0 && (
+              <button
+                type="button"
+                onClick={() => removeSkill(index)}
+                className="text-red-600 hover:text-red-800"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addSkill}
+          className="mt-2 text-sm text-indigo-600 hover:text-indigo-500"
+        >
+          Add Another Skill
+        </button>
       </div>
 
       <div>
@@ -93,7 +121,7 @@ export default function IdeaForm() {
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.compensation}
-          onChange={e => setFormData(prev => ({ ...prev, compensation: e.target.value }))}
+          onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
         >
           <option value="equity">Equity</option>
           <option value="fixed">Fixed Amount</option>
@@ -108,10 +136,10 @@ export default function IdeaForm() {
           type="text"
           id="amount"
           required
-          placeholder={formData.compensation === 'equity' ? 'e.g., 10% equity' : 'e.g., $5000'}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.amount}
-          onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          placeholder={formData.compensation === 'equity' ? 'e.g., 10% equity' : 'e.g., $5000'}
         />
       </div>
 
@@ -125,55 +153,24 @@ export default function IdeaForm() {
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.industry}
-          onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
+          onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+          placeholder="e.g., Technology, Healthcare, Education"
         />
       </div>
 
       <div>
-        <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
-          Required Skills
-        </label>
-        <input
-          type="text"
-          id="skills"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          value={skillInput}
-          onChange={e => setSkillInput(e.target.value)}
-          onKeyDown={handleSkillAdd}
-          placeholder="Type a skill and press Enter"
-        />
-        {formData.skills.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {formData.skills.map(skill => (
-              <span
-                key={skill}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-              >
-                {skill}
-                <button
-                  type="button"
-                  onClick={() => removeSkill(skill)}
-                  className="ml-1 inline-flex items-center p-0.5 text-indigo-400 hover:text-indigo-600"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+            ${loading 
+              ? 'bg-indigo-400 cursor-not-allowed' 
+              : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+            }`}
+        >
+          {loading ? 'Creating...' : 'Create Idea'}
+        </button>
       </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-          ${loading 
-            ? 'bg-indigo-400 cursor-not-allowed' 
-            : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-          }`}
-      >
-        {loading ? 'Creating...' : 'Create Idea'}
-      </button>
     </form>
   );
 }

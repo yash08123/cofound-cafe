@@ -8,6 +8,7 @@ interface IdeaCardProps {
   description: string;
   skills: string[];
   compensation: string;
+  amount: string;
   industry: string;
   founderId: {
     name: string;
@@ -43,6 +44,15 @@ export default function IdeaCard(props: IdeaCardProps) {
               )}
             </div>
           )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+            {props.compensation}
+          </span>
+          <span className="text-sm text-gray-600">
+            {props.amount}
+          </span>
         </div>
 
         {user?.role === 'developer' && (

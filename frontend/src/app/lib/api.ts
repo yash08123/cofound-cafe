@@ -40,7 +40,6 @@ export async function createIdea(ideaData: {
   description: string;
   skills: string[];
   compensation: string;
-  amount: string;
   industry: string;
 }) {
   const headers = getHeaders();
@@ -114,16 +113,15 @@ export async function signUp(data: SignUpData) {
 export async function signIn(data: SignInData) {
   try {
     console.log('Signing in with:', data);
+
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
       },
       body: JSON.stringify(data),
     });
 
-    // Log the raw response for debugging
     const responseText = await response.text();
     console.log('Raw response:', responseText);
 
@@ -132,16 +130,11 @@ export async function signIn(data: SignInData) {
       result = JSON.parse(responseText);
     } catch (e) {
       console.error('Failed to parse response:', e);
-      throw new Error('Server returned invalid JSON');
+      throw new Error('Invalid server response');
     }
 
     if (!response.ok || result.status === 'error') {
       throw new Error(result.message || 'Failed to sign in');
-    }
-
-    // Verify the response structure
-    if (!result.data?.user?.id) {
-      throw new Error('Invalid response format from server');
     }
 
     return result.data;

@@ -44,12 +44,17 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt:', { email, password }); // Debug log
 
-    // Check if user exists
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find user
     const user = await User.findOne({ email });
-    console.log('Found user:', user); // Debug log
-
     if (!user) {
       return res.status(401).json({
         status: 'error',
@@ -57,19 +62,21 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Direct password comparison
-    if (password !== user.password) {
+    // Verify password
+    const isValid = await user.comparePassword(password);
+    if (!isValid) {
       return res.status(401).json({
         status: 'error',
         message: 'Invalid credentials'
       });
     }
 
-    res.status(200).json({
+    // Return user data
+    return res.status(200).json({
       status: 'success',
       data: {
         user: {
-          id: user._id.toString(),
+          id: user._id,
           name: user.name,
           email: user.email,
           role: user.role,

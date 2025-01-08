@@ -1,21 +1,21 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
 import { createIdea } from '../lib/api';
 
 export default function IdeaForm() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     skills: [] as string[],
     compensation: 'equity',
+    amount: '',
     industry: '',
   });
-  const [currentSkill, setCurrentSkill] = useState('');
+  const [skillInput, setSkillInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +24,7 @@ export default function IdeaForm() {
 
     try {
       await createIdea(formData);
-      router.push('/dashboard/ideas');
-      router.refresh();
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create idea');
     } finally {
@@ -33,126 +32,148 @@ export default function IdeaForm() {
     }
   };
 
-  const addSkill = () => {
-    if (currentSkill && !formData.skills.includes(currentSkill)) {
-      setFormData({
-        ...formData,
-        skills: [...formData.skills, currentSkill],
-      });
-      setCurrentSkill('');
+  const handleSkillAdd = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && skillInput.trim()) {
+      e.preventDefault();
+      setFormData(prev => ({
+        ...prev,
+        skills: [...prev.skills, skillInput.trim()]
+      }));
+      setSkillInput('');
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setFormData({
-      ...formData,
-      skills: formData.skills.filter((skill) => skill !== skillToRemove),
-    });
+    setFormData(prev => ({
+      ...prev,
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
+    }));
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-          {error}
-        </div>
+        <div className="text-red-600 text-sm">{error}</div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Title</label>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+          Title
+        </label>
         <input
           type="text"
+          id="title"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
         <textarea
+          id="description"
           required
           rows={4}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Skills</label>
-        <div className="mt-1 flex rounded-md shadow-sm">
-          <input
-            type="text"
-            className="block w-full rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-            value={currentSkill}
-            onChange={(e) => setCurrentSkill(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-          />
-          <button
-            type="button"
-            onClick={addSkill}
-            className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {formData.skills.map((skill) => (
-            <span
-              key={skill}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-            >
-              {skill}
-              <button
-                type="button"
-                onClick={() => removeSkill(skill)}
-                className="ml-1 inline-flex items-center p-0.5 hover:bg-indigo-200 rounded-full"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Compensation</label>
+        <label htmlFor="compensation" className="block text-sm font-medium text-gray-700">
+          Compensation Type
+        </label>
         <select
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          id="compensation"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           value={formData.compensation}
-          onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
+          onChange={e => setFormData(prev => ({ ...prev, compensation: e.target.value }))}
         >
           <option value="equity">Equity</option>
-          <option value="fixed">Fixed Payment</option>
+          <option value="fixed">Fixed Amount</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Industry</label>
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          Compensation Amount
+        </label>
         <input
           type="text"
+          id="amount"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          value={formData.industry}
-          onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+          placeholder={formData.compensation === 'equity' ? 'e.g., 10% equity' : 'e.g., $5000'}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value={formData.amount}
+          onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
         />
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm
-            ${loading 
-              ? 'bg-indigo-400 cursor-not-allowed' 
-              : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'
-            }`}
-        >
-          {loading ? 'Creating...' : 'Post Idea'}
-        </button>
+      <div>
+        <label htmlFor="industry" className="block text-sm font-medium text-gray-700">
+          Industry
+        </label>
+        <input
+          type="text"
+          id="industry"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value={formData.industry}
+          onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
+        />
       </div>
+
+      <div>
+        <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
+          Required Skills
+        </label>
+        <input
+          type="text"
+          id="skills"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value={skillInput}
+          onChange={e => setSkillInput(e.target.value)}
+          onKeyDown={handleSkillAdd}
+          placeholder="Type a skill and press Enter"
+        />
+        {formData.skills.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {formData.skills.map(skill => (
+              <span
+                key={skill}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+              >
+                {skill}
+                <button
+                  type="button"
+                  onClick={() => removeSkill(skill)}
+                  className="ml-1 inline-flex items-center p-0.5 text-indigo-400 hover:text-indigo-600"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+          ${loading 
+            ? 'bg-indigo-400 cursor-not-allowed' 
+            : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+          }`}
+      >
+        {loading ? 'Creating...' : 'Create Idea'}
+      </button>
     </form>
   );
 }

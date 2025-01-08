@@ -1,19 +1,41 @@
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+const User = require("../models/User.js");
 
-export const authenticate = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
+const authenticate = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
-    req.role = decoded.role;
+    const userId = req.headers['user-id'];
+    console.log('Auth middleware - received headers:', req.headers);
+    console.log('Auth middleware - user ID:', userId);
+    
+    if (!userId) {
+      console.log('Auth middleware - no user ID provided');
+      return res.status(401).json({ 
+        status: 'error',
+        message: "Authentication required" 
+      });
+    }
+
+    const user = await User.findById(userId);
+    console.log('Auth middleware - found user:', user);
+
+    if (!user) {
+      console.log('Auth middleware - user not found in database');
+      return res.status(401).json({ 
+        status: 'error',
+        message: "User not found" 
+      });
+    }
+
+    req.userId = userId;
+    req.role = user.role;
+    console.log('Auth middleware - authentication successful');
     next();
   } catch (err) {
-    res.status(401).json({ message: "Invalid token", error: err.message });
+    console.error('Auth middleware - error:', err);
+    return res.status(401).json({ 
+      status: 'error',
+      message: "Authentication failed" 
+    });
   }
 };
+
+module.exports = { authenticate };

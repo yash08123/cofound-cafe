@@ -1,11 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Code, Eye, EyeOff, Lock, Mail, Phone, Rocket, User } from 'lucide-react'
+import { signUp } from '../../lib/api'
 
 export default function SignUp() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [userType, setUserType] = useState<'founder' | 'developer' | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -13,6 +18,29 @@ export default function SignUp() {
     phone: '',
     password: '',
   })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userType) {
+      setError('Please select a role (Founder or Developer)')
+      return
+    }
+
+    setError(null)
+    setLoading(true)
+
+    try {
+      await signUp({
+        ...formData,
+        role: userType,
+      })
+      router.push('/auth/sign-in')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -64,7 +92,13 @@ export default function SignUp() {
               </p>
             </div>
 
-            <form className="mt-8 space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-5">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
@@ -160,9 +194,19 @@ export default function SignUp() {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={loading || !userType}
+                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                    ${loading || !userType
+                      ? 'bg-indigo-400 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                    }`}
                 >
-                  {userType ? `Sign Up as ${userType.charAt(0).toUpperCase() + userType.slice(1)}` : 'Select a role to sign up'}
+                  {loading 
+                    ? 'Signing up...' 
+                    : userType 
+                      ? `Sign Up as ${userType.charAt(0).toUpperCase() + userType.slice(1)}` 
+                      : 'Select a role to sign up'
+                  }
                 </button>
               </div>
             </form>

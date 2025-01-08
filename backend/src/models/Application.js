@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const ApplicationSchema = new mongoose.Schema({
   ideaId: { type: mongoose.Schema.Types.ObjectId, ref: "Idea", required: true },
   developerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   pitch: { type: String, required: true },
   status: { type: String, enum: ["pending", "accepted", "rejected"], default: "pending" },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("Application", ApplicationSchema);
+module.exports = mongoose.model("Application", ApplicationSchema);

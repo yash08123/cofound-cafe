@@ -1,43 +1,132 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
+const User = require("../models/User.js");
+const AppError = require("../utils/error.js");
 
 // Register a new user
-export const register = async (req, res) => {
-  const { email, name, role, password } = req.body;
-
+const register = async (req, res, next) => {
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+    const { email, name, role, password, phone } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new AppError('Email already registered', 400);
     }
 
-    const user = new User({ email, name, role, password });
+    // Create new user with plain password
+    const user = new User({
+      email,
+      name,
+      role,
+      password, // Store password directly
+      phone
+    });
+
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-// Login a user
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-
+// Login user
+const login = async (req, res, next) => {
   try {
+    const { email, password } = req.body;
+    console.log('Login attempt:', { email, password }); // Debug log
+
+    // Check if user exists
     const user = await User.findOne({ email });
+    console.log('Found user:', user); // Debug log
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid credentials'
+      });
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    // Direct password comparison
+    if (password !== user.password) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid credentials'
+      });
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.status(200).json({ token });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    next(error);
   }
+};
+
+// Get user profile
+const getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update user profile
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, bio, whatsapp, githubLink, skills } = req.body;
+    
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { name, bio, whatsapp, githubLink, skills },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  getProfile,
+  updateProfile
 };

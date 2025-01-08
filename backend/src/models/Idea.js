@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const IdeaSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -7,6 +7,8 @@ const IdeaSchema = new mongoose.Schema({
   compensation: { type: String, enum: ["equity", "fixed"], required: true },
   industry: { type: String, required: true },
   founderId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  applications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Application" }],
+  createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("Idea", IdeaSchema);
+module.exports = mongoose.model("Idea", IdeaSchema);

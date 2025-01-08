@@ -1,10 +1,14 @@
-import express from "express";
-import { createIdea, getIdeas } from "../controllers/ideaController.js";
-import { authenticate } from "../middleware/authMiddleware.js";
+const express = require("express");
+const { createIdea, getIdeas, getIdeaById, updateIdea, deleteIdea, getMyIdeas } = require("../controller/idea.controller.js");
+const { authenticate } = require("../middleware/auth.js");
 
 const router = express.Router();
 
 router.post("/", authenticate, createIdea);
 router.get("/", getIdeas);
+router.get("/user/my-ideas", authenticate, getMyIdeas);
+router.get("/:id", getIdeaById);
+router.put("/:id", authenticate, updateIdea);
+router.delete("/:id", authenticate, deleteIdea);
 
-export default router;
+module.exports = router;

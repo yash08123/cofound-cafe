@@ -56,19 +56,20 @@ app.use("/api/applications", applicationRoutes);
 // Error handling
 app.use(errorHandler);
 
-// Handle 404
-app.use((req, res) => {
-  res.status(404).json({ 
-    status: 'error',
-    message: 'Route not found' 
-  });
-});
-
-// Test route to verify CORS
+// Move test route before 404 handler
 app.get('/api/test-cors', (req, res) => {
   res.json({ 
     message: 'CORS is working',
     origin: req.headers.origin 
+  });
+});
+
+// Handle 404 - move this last
+app.use((req, res) => {
+  console.log('404 for path:', req.path); // Add logging
+  res.status(404).json({ 
+    status: 'error',
+    message: 'Route not found' 
   });
 });
 

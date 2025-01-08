@@ -4,10 +4,10 @@ const { authenticate } = require("../middleware/auth.js");
 
 const router = express.Router();
 
-router.post("/", authenticate, createIdea);
-router.get("/", getIdeas);
+router.get("/", authenticate, getIdeas);
 router.get("/user/my-ideas", authenticate, getMyIdeas);
-router.get("/:id", getIdeaById);
+router.post("/", authenticate, createIdea);
+router.get("/:id", authenticate, getIdeaById);
 router.put("/:id", authenticate, updateIdea);
 router.delete("/:id", authenticate, deleteIdea);
 

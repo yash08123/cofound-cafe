@@ -36,6 +36,7 @@ export default function IdeasPage() {
       try {
         setLoading(true);
         const data = await fetchIdeas();
+        console.log('Fetched ideas:', data);
         setIdeas(data);
         setError(null);
       } catch (error) {

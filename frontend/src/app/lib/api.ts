@@ -24,12 +24,49 @@ const getHeaders = () => {
 };
 
 export async function fetchIdeas() {
-  const response = await fetch(`${API_BASE_URL}/ideas`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) throw new Error('Failed to fetch ideas');
-  const data = await response.json();
-  return data.data;
+  try {
+    const user = checkAuth();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const endpoint = `${API_BASE_URL}/ideas`;
+    console.log('Fetching ideas as:', user.role);
+
+    const response = await fetch(endpoint, {
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch ideas');
+    }
+    
+    const data = await response.json();
+    console.log(`Fetched ${data.data?.length || 0} ideas`);
+    return data.data;
+  } catch (error) {
+    console.error('Fetch ideas error:', error);
+    throw error;
+  }
+}
+
+// Add a separate function for fetching founder's ideas
+export async function fetchMyIdeas() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/ideas/user/my-ideas`, {
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch my ideas');
+    }
+    
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Fetch my ideas error:', error);
+    throw error;
+  }
 }
 
 export async function fetchIdea(id: string) {
@@ -46,6 +83,7 @@ export async function createIdea(ideaData: {
   description: string;
   skills: string[];
   compensation: string;
+  amount: string;
   industry: string;
 }) {
   const headers = getHeaders();
@@ -216,5 +254,33 @@ export async function updateApplicationStatus(applicationId: string, status: 'ac
   if (!response.ok) throw new Error('Failed to update application status');
   const data = await response.json();
   return data.data;
+}
+
+export async function updateIdea(ideaId: string, ideaData: {
+  title?: string;
+  description?: string;
+  skills?: string[];
+  compensation?: string;
+  amount?: string;
+  industry?: string;
+}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/ideas/${ideaId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(ideaData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update idea');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Update idea error:', error);
+    throw error;
+  }
 }
   

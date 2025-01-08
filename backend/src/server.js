@@ -14,12 +14,28 @@ connectDB();
 
 const app = express();
 
-// CORS configuration - more permissive for development
+// CORS configuration for both development and production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://cofound-cafe.vercel.app', // Add your Vercel domain
+  // Add any other domains you need
+];
+
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'user-id']
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'user-id', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Body parser middleware

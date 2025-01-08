@@ -1,6 +1,12 @@
 import { checkAuth } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Add API URL validation
+if (!API_BASE_URL) {
+  console.error('API URL is not configured');
+}
+
 console.log('API Base URL:', API_BASE_URL);
 
 // Helper function to get headers

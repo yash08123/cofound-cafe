@@ -23,20 +23,6 @@ const getHeaders = () => {
   return headers;
 };
 
-// Add a function to handle API responses
-const handleResponse = async (response: Response) => {
-  const text = await response.text();
-  try {
-    const data = JSON.parse(text);
-    if (!response.ok) {
-      throw new Error(data.message || 'API Error');
-    }
-    return data;
-  } catch (e) {
-    throw new Error(`${e}`);
-  }
-};
-
 export async function fetchIdeas() {
   const response = await fetch(`${API_BASE_URL}/ideas`, {
     headers: getHeaders(),
@@ -149,19 +135,31 @@ export async function signUp(data: SignUpData) {
 
 export async function signIn(data: SignInData) {
   try {
-    console.log('Signing in with:', data);
-    console.log('API URL:', `${API_BASE_URL}/auth/login`);
-
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Origin': window.location.origin
       },
       body: JSON.stringify(data),
     });
 
-    const result = await handleResponse(response);
+    const responseText = await response.text();
+    console.log('Raw login response:', responseText);
+
+    const result = JSON.parse(responseText);
+    
+    if (!response.ok) {
+      throw new Error(result?.message || 'Invalid credentials');
+    }
+
+    if (!result?.data?.user?.id) {
+      throw new Error('Invalid user data received');
+    }
+
+    localStorage.setItem('user', JSON.stringify(result.data.user));
     return result.data;
   } catch (error) {
     console.error('Sign in error:', error);

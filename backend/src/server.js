@@ -14,23 +14,62 @@ connectDB();
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - more permissive for development
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'user-id']
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'user-id']
 }));
 
+// Body parser middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/ideas", ideaRoutes);
 app.use("/api/applications", applicationRoutes);
 
-// Error handling middleware (keep only one)
+// Error handling
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ 
+    status: 'error',
+    message: 'Route not found' 
+  });
+});
+
+// Add a test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working' });
+});
+
+const startServer = async () => {
+  try {
+    const PORT = process.env.PORT || 5000;
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`API URL: http://localhost:${PORT}/api`);
+    });
+
+    // Handle server errors
+    server.on('error', (error) => {
+      console.error('Server error:', error);
+      process.exit(1);
+    });
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

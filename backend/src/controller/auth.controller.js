@@ -4,24 +4,29 @@ const AppError = require("../utils/error.js");
 // Register a new user
 const register = async (req, res, next) => {
   try {
+    console.log('Register request body:', req.body);
     const { email, name, role, password, phone } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new AppError('Email already registered', 400);
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email already registered'
+      });
     }
 
-    // Create new user with plain password
+    // Create new user
     const user = new User({
       email,
       name,
       role,
-      password, // Store password directly
+      password,
       phone
     });
 
     await user.save();
+    console.log('User created:', user);
 
     res.status(201).json({
       status: 'success',
@@ -36,6 +41,7 @@ const register = async (req, res, next) => {
       }
     });
   } catch (error) {
+    console.error('Register error:', error);
     next(error);
   }
 };

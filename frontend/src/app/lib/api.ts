@@ -17,6 +17,20 @@ const getHeaders = () => {
   return headers;
 };
 
+// Add a function to handle API responses
+const handleResponse = async (response: Response) => {
+  const text = await response.text();
+  try {
+    const data = JSON.parse(text);
+    if (!response.ok) {
+      throw new Error(data.message || 'API Error');
+    }
+    return data;
+  } catch (e) {
+    throw new Error('Invalid response from server');
+  }
+};
+
 export async function fetchIdeas() {
   const response = await fetch(`${API_BASE_URL}/ideas`, {
     headers: getHeaders(),
@@ -93,31 +107,15 @@ interface SignInData {
 }
 
 export async function signUp(data: SignUpData) {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to sign up');
-  }
-
-  const result = await response.json();
-  return result.data;
-}
-
-export async function signIn(data: SignInData) {
   try {
-    console.log('Signing in with:', data);
+    const url = `${API_BASE_URL}/auth/register`;
+    console.log('Signup URL:', url);
 
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(data),
     });
@@ -125,18 +123,38 @@ export async function signIn(data: SignInData) {
     const responseText = await response.text();
     console.log('Raw response:', responseText);
 
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch (e) {
-      console.error('Failed to parse response:', e);
-      throw new Error('Invalid server response');
-    }
+    const result = JSON.parse(responseText);
 
+    // Check for error response
     if (!response.ok || result.status === 'error') {
-      throw new Error(result.message || 'Failed to sign in');
+      throw new Error(result.message || 'Failed to sign up');
     }
 
+    return result.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      // Preserve the original error message
+      throw error;
+    }
+    throw new Error('Failed to sign up');
+  }
+}
+
+export async function signIn(data: SignInData) {
+  try {
+    console.log('Signing in with:', data);
+    console.log('API URL:', `${API_BASE_URL}/auth/login`);
+
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await handleResponse(response);
     return result.data;
   } catch (error) {
     console.error('Sign in error:', error);

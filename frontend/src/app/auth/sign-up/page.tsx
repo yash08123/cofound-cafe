@@ -30,12 +30,15 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      await signUp({
+      const signUpData = {
         ...formData,
         role: userType,
-      })
+      }
+      
+      await signUp(signUpData)
       router.push('/auth/sign-in')
     } catch (err) {
+      console.error('Signup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to sign up')
     } finally {
       setLoading(false)

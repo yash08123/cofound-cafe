@@ -119,9 +119,11 @@ export async function signUp(data: SignUpData) {
 
     const response = await fetch(url, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Origin': window.location.origin
       },
       body: JSON.stringify(data),
     });
@@ -131,15 +133,14 @@ export async function signUp(data: SignUpData) {
 
     const result = JSON.parse(responseText);
 
-    // Check for error response
     if (!response.ok || result.status === 'error') {
       throw new Error(result.message || 'Failed to sign up');
     }
 
     return result.data;
   } catch (error) {
+    console.error('Signup error:', error);
     if (error instanceof Error) {
-      // Preserve the original error message
       throw error;
     }
     throw new Error('Failed to sign up');
